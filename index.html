@@ -3,65 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <title>Checklist Online - São José/SC</title>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
     <style>
         body { font-family: sans-serif; max-width: 500px; margin: 20px auto; padding: 20px; background: #f4f4f4; }
-        .item { background: white; padding: 10px; margin-bottom: 5px; display: flex; align-items: center; border-radius: 4px; }
-        .item input[type="checkbox"] { margin-right: 10px; }
-        .prazo { font-size: 0.8em; color: #666; margin-left: auto; }
-        input[type="text"] { padding: 8px; width: 70%; margin-bottom: 10px; }
-        button { padding: 8px; cursor: pointer; background: #28a745; color: white; border: none; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .item { background: #fff; padding: 10px; margin-bottom: 5px; display: flex; align-items: center; border-bottom: 1px solid #eee; }
+        .item.done span { text-decoration: line-through; color: #888; }
+        input[type="text"] { padding: 8px; width: 40%; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 8px 15px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 4px; }
+        .prazo { font-size: 0.8em; color: #666; margin-left: auto; margin-right: 10px; }
     </style>
 </head>
 <body>
-
-    <h2>📋 Minhas Atividades</h2>
-    
-    <input type="text" id="task" placeholder="Atividade (ex: NF Nilfisk)">
-    <input type="text" id="deadline" placeholder="Prazo (ex: Dia 10)">
-    <button onclick="addActivity()">Cadastrar</button>
-
-    <div id="list"></div>
+    <div class="card">
+        <h2>📋 Atividades Mensais</h2>
+        <input type="text" id="task" placeholder="Atividade">
+        <input type="text" id="deadline" placeholder="Prazo">
+        <button onclick="addActivity()">Salvar</button>
+        <div id="list"></div>
+    </div>
 
     <script>
-        // Simulando banco de dados local (para teste imediato no VS Code)
-        // Para ficar online real para outros, você conectará ao Firebase abaixo
-        let activities = JSON.parse(localStorage.getItem('atividades')) || [];
+        // Suas chaves do print {FBFF7342-8848-4782-9EAB-9D69DAF0DBDC}.png
+        const firebaseConfig = {
+            apiKey: "AIzaSyBBJUQ6XDrp6f_-oaEcZ_PTWVJDXvY1XCc",
+            authDomain: "checklist-mensal.firebaseapp.com",
+            projectId: "checklist-mensal",
+            storageBucket: "checklist-mensal.firebasestorage.app",
+            messagingSenderId: "260257157509",
+            appId: "1:260257157509:web:a055cbc94eba3f27d1f4ec",
+            databaseURL: "https://checklist-mensal-default-rtdb.firebaseio.com"
+        };
 
-        function render() {
-            const listDiv = document.getElementById('list');
-            listDiv.innerHTML = activities.map((a, i) => `
-                <div class="item">
-                    <input type="checkbox" ${a.done ? 'checked' : ''} onclick="toggle(${i})">
-                    <span>${a.text}</span>
-                    <span class="prazo">${a.deadline}</span>
-                    <button style="background:red; padding: 2px 5px; margin-left:10px" onclick="remove(${i})">x</button>
-                </div>
-            `).join('');
-            localStorage.setItem('atividades', JSON.stringify(activities));
-        }
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database().ref('atividades');
 
         function addActivity() {
             const text = document.getElementById('task').value;
             const deadline = document.getElementById('deadline').value;
             if(text) {
-                activities.push({ text, deadline, done: false });
-                render();
+                db.push({ text, deadline, done: false });
                 document.getElementById('task').value = '';
                 document.getElementById('deadline').value = '';
             }
         }
 
-        function toggle(index) {
-            activities[index].done = !activities[index].done;
-            render();
-        }
+        db.on('value', (snapshot) => {
+            const listDiv = document.getElementById('list');
+            listDiv.innerHTML = '';
+            snapshot.forEach((child) => {
+                const a = child.val();
+                const id = child.key;
+                listDiv.innerHTML += `
+                    <div class="item ${a.done ? 'done' : ''}">
+                        <input type="checkbox" ${a.done ? 'checked' : ''} onclick="toggle('${id}', ${a.done})">
+                        <span>${a.text}</span>
+                        <span class="prazo">${a.deadline}</span>
+                    </div>`;
+            });
+        });
 
-        function remove(index) {
-            activities.splice(index, 1);
-            render();
+        function toggle(id, currentStatus) {
+            db.child(id).update({ done: !currentStatus });
         }
-
-        render();
     </script>
 </body>
 </html>
+
