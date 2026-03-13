@@ -1,112 +1,67 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>Checklist</title>
-
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-
-<style>
-
-body{
-font-family:Arial;
-background:#f2f2f2;
-padding:40px;
-}
-
-.container{
-max-width:600px;
-margin:auto;
-background:white;
-padding:20px;
-border-radius:10px;
-}
-
-.item{
-display:flex;
-justify-content:space-between;
-margin:10px 0;
-}
-
-</style>
-
+    <meta charset="UTF-8">
+    <title>Checklist Online - São José/SC</title>
+    <style>
+        body { font-family: sans-serif; max-width: 500px; margin: 20px auto; padding: 20px; background: #f4f4f4; }
+        .item { background: white; padding: 10px; margin-bottom: 5px; display: flex; align-items: center; border-radius: 4px; }
+        .item input[type="checkbox"] { margin-right: 10px; }
+        .prazo { font-size: 0.8em; color: #666; margin-left: auto; }
+        input[type="text"] { padding: 8px; width: 70%; margin-bottom: 10px; }
+        button { padding: 8px; cursor: pointer; background: #28a745; color: white; border: none; }
+    </style>
 </head>
-
 <body>
 
-<div class="container">
+    <h2>📋 Minhas Atividades</h2>
+    
+    <input type="text" id="task" placeholder="Atividade (ex: NF Nilfisk)">
+    <input type="text" id="deadline" placeholder="Prazo (ex: Dia 10)">
+    <button onclick="addActivity()">Cadastrar</button>
 
-<h2>Checklist mensal</h2>
+    <div id="list"></div>
 
-<input id="task" placeholder="Tarefa">
-<input id="day" type="number" placeholder="Dia">
-<button onclick="addTask()">Adicionar</button>
+    <script>
+        // Simulando banco de dados local (para teste imediato no VS Code)
+        // Para ficar online real para outros, você conectará ao Firebase abaixo
+        let activities = JSON.parse(localStorage.getItem('atividades')) || [];
 
-<div id="list"></div>
+        function render() {
+            const listDiv = document.getElementById('list');
+            listDiv.innerHTML = activities.map((a, i) => `
+                <div class="item">
+                    <input type="checkbox" ${a.done ? 'checked' : ''} onclick="toggle(${i})">
+                    <span>${a.text}</span>
+                    <span class="prazo">${a.deadline}</span>
+                    <button style="background:red; padding: 2px 5px; margin-left:10px" onclick="remove(${i})">x</button>
+                </div>
+            `).join('');
+            localStorage.setItem('atividades', JSON.stringify(activities));
+        }
 
-</div>
+        function addActivity() {
+            const text = document.getElementById('task').value;
+            const deadline = document.getElementById('deadline').value;
+            if(text) {
+                activities.push({ text, deadline, done: false });
+                render();
+                document.getElementById('task').value = '';
+                document.getElementById('deadline').value = '';
+            }
+        }
 
-<script>
+        function toggle(index) {
+            activities[index].done = !activities[index].done;
+            render();
+        }
 
-// CONFIG FIREBASE (COLE AQUI A SUA)
+        function remove(index) {
+            activities.splice(index, 1);
+            render();
+        }
 
-const firebaseConfig = {
-apiKey: "COLOQUE_AQUI",
-authDomain: "COLOQUE_AQUI",
-projectId: "COLOQUE_AQUI",
-storageBucket: "COLOQUE_AQUI",
-messagingSenderId: "COLOQUE_AQUI",
-appId: "COLOQUE_AQUI"
-};
-
-firebase.initializeApp(firebaseConfig);
-
-const db = firebase.firestore();
-
-function addTask(){
-
-const task = document.getElementById("task").value
-const day = document.getElementById("day").value
-
-db.collection("tasks").add({
-task:task,
-day:day,
-done:false
-})
-
-}
-
-function loadTasks(){
-
-db.collection("tasks").onSnapshot((snapshot)=>{
-
-const list=document.getElementById("list")
-list.innerHTML=""
-
-snapshot.forEach((doc)=>{
-
-const data=doc.data()
-
-const div=document.createElement("div")
-div.className="item"
-
-div.innerHTML = `
-<input type="checkbox">
-${data.task} (dia ${data.day})
-`
-
-list.appendChild(div)
-
-})
-
-})
-
-}
-
-loadTasks()
-
-</script>
-
+        render();
+    </script>
 </body>
 </html>
