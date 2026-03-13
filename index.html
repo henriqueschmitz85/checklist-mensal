@@ -2,71 +2,59 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Checklist Online - São José/SC</title>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
-    <style>
-        body { font-family: sans-serif; max-width: 500px; margin: 20px auto; padding: 20px; background: #f4f4f4; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .item { background: #fff; padding: 10px; margin-bottom: 5px; display: flex; align-items: center; border-bottom: 1px solid #eee; }
-        .item.done span { text-decoration: line-through; color: #888; }
-        input[type="text"] { padding: 8px; width: 40%; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        button { padding: 8px 15px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 4px; }
-        .prazo { font-size: 0.8em; color: #666; margin-left: auto; margin-right: 10px; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist Empresa</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
-<body>
-    <div class="card">
-        <h2>📋 Atividades Mensais</h2>
-        <input type="text" id="task" placeholder="Atividade">
-        <input type="text" id="deadline" placeholder="Prazo">
-        <button onclick="addActivity()">Salvar</button>
-        <div id="list"></div>
+<body style="font-family: sans-serif; background: #222; color: white; padding: 20px;">
+
+    <div style="background: #333; padding: 20px; border-radius: 10px; max-width: 400px; margin: auto;">
+        <h2>📋 Checklist Online</h2>
+        <input type="text" id="t" placeholder="Atividade" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+        <input type="text" id="p" placeholder="Prazo" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+        <button onclick="add()" style="width: 100%; padding: 10px; background: #28a745; color: white; border: none; cursor: pointer;">Salvar Atividade</button>
+        
+        <div id="lista" style="margin-top: 20px;"></div>
     </div>
 
     <script>
-        // Suas chaves do print {FBFF7342-8848-4782-9EAB-9D69DAF0DBDC}.png
-        const firebaseConfig = {
+        // Configurações do seu print
+        const config = {
             apiKey: "AIzaSyBBJUQ6XDrp6f_-oaEcZ_PTWVJDXvY1XCc",
             authDomain: "checklist-mensal.firebaseapp.com",
+            databaseURL: "https://checklist-mensal-default-rtdb.firebaseio.com",
             projectId: "checklist-mensal",
             storageBucket: "checklist-mensal.firebasestorage.app",
-            messagingSenderId: "260257157509",
-            appId: "1:260257157509:web:a055cbc94eba3f27d1f4ec",
-            databaseURL: "https://checklist-mensal-default-rtdb.firebaseio.com"
+            appId: "1:260257157509:web:a055cbc94eba3f27d1f4ec"
         };
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database().ref('atividades');
+        firebase.initializeApp(config);
+        const db = firebase.database().ref('tarefas');
 
-        function addActivity() {
-            const text = document.getElementById('task').value;
-            const deadline = document.getElementById('deadline').value;
-            if(text) {
-                db.push({ text, deadline, done: false });
-                document.getElementById('task').value = '';
-                document.getElementById('deadline').value = '';
+        function add() {
+            const t = document.getElementById('t').value;
+            const p = document.getElementById('p').value;
+            if(t && p) {
+                db.push({ tarefa: t, prazo: p, status: false });
+                document.getElementById('t').value = '';
+                document.getElementById('p').value = '';
             }
         }
 
-        db.on('value', (snapshot) => {
-            const listDiv = document.getElementById('list');
-            listDiv.innerHTML = '';
-            snapshot.forEach((child) => {
-                const a = child.val();
-                const id = child.key;
-                listDiv.innerHTML += `
-                    <div class="item ${a.done ? 'done' : ''}">
-                        <input type="checkbox" ${a.done ? 'checked' : ''} onclick="toggle('${id}', ${a.done})">
-                        <span>${a.text}</span>
-                        <span class="prazo">${a.deadline}</span>
+        db.on('value', (s) => {
+            const div = document.getElementById('lista');
+            div.innerHTML = '';
+            s.forEach((item) => {
+                const d = item.val();
+                div.innerHTML += `
+                    <div style="background:#444; padding:10px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
+                        <input type="checkbox" ${d.status ? 'checked' : ''} onclick="firebase.database().ref('tarefas/${item.key}').update({status: !${d.status}})">
+                        <span style="${d.status ? 'text-decoration:line-through; color:gray' : ''}">${d.tarefa} (${d.prazo})</span>
+                        <button onclick="firebase.database().ref('tarefas/${item.key}').remove()" style="background:red; color:white; border:none; padding:5px;">X</button>
                     </div>`;
             });
         });
-
-        function toggle(id, currentStatus) {
-            db.child(id).update({ done: !currentStatus });
-        }
     </script>
 </body>
 </html>
