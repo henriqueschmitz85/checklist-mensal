@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Checklist Mensal</title>
+
+<style>
+
+body{
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg,#4facfe,#00f2fe);
+    margin:0;
+    padding:40px;
+}
+
+.container{
+    max-width:700px;
+    margin:auto;
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.2);
+}
+
+h1{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.form{
+    display:flex;
+    gap:10px;
+    margin-bottom:20px;
+}
+
+input{
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    flex:1;
+}
+
+button{
+    padding:10px 16px;
+    border:none;
+    border-radius:8px;
+    background:#4facfe;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#3399ff;
+}
+
+.item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px;
+    margin-bottom:10px;
+    background:#f7f7f7;
+    border-radius:8px;
+}
+
+.left{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.day{
+    font-size:12px;
+    background:#4facfe;
+    color:white;
+    padding:4px 8px;
+    border-radius:5px;
+}
+
+.done{
+    text-decoration:line-through;
+    color:#888;
+}
+
+.delete{
+    background:#ff5c5c;
+}
+
+.delete:hover{
+    background:#e04848;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>📋 Checklist Mensal</h1>
+
+<div class="form">
+<input id="task" placeholder="Tarefa">
+<input id="day" type="number" min="1" max="31" placeholder="Dia">
+<button onclick="addItem()">Adicionar</button>
+</div>
+
+<div id="list"></div>
+
+</div>
+
+<script>
+
+let items = JSON.parse(localStorage.getItem("checklist")) || []
+
+function save(){
+localStorage.setItem("checklist",JSON.stringify(items))
+}
+
+function addItem(){
+
+const task=document.getElementById("task").value
+const day=document.getElementById("day").value
+
+if(!task || !day) return
+
+items.push({
+task,
+day,
+done:false
+})
+
+save()
+render()
+
+document.getElementById("task").value=""
+document.getElementById("day").value=""
+}
+
+function toggle(index){
+items[index].done=!items[index].done
+save()
+render()
+}
+
+function removeItem(index){
+items.splice(index,1)
+save()
+render()
+}
+
+function render(){
+
+const list=document.getElementById("list")
+list.innerHTML=""
+
+items.sort((a,b)=>a.day-b.day)
+
+items.forEach((item,index)=>{
+
+const div=document.createElement("div")
+div.className="item"
+
+const left=document.createElement("div")
+left.className="left"
+
+const check=document.createElement("input")
+check.type="checkbox"
+check.checked=item.done
+check.onclick=()=>toggle(index)
+
+const text=document.createElement("span")
+text.innerText=item.task
+
+if(item.done) text.classList.add("done")
+
+const day=document.createElement("span")
+day.className="day"
+day.innerText="Dia "+item.day
+
+left.appendChild(check)
+left.appendChild(text)
+left.appendChild(day)
+
+const del=document.createElement("button")
+del.innerText="Excluir"
+del.className="delete"
+del.onclick=()=>removeItem(index)
+
+div.appendChild(left)
+div.appendChild(del)
+
+list.appendChild(div)
+
+})
+
+}
+
+render()
+
+</script>
+
+</body>
+</html>
